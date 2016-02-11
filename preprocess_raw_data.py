@@ -9,7 +9,6 @@ from collections import OrderedDict
 ### num_unique_terms term_1_index:count term_2_index:count... term_N_index:count
 
 if __name__ == '__main__':
-
     for file_type in ['herb', 'syndrome', 'symptoms']:
         document_dct = OrderedDict({})
         target_list = []
