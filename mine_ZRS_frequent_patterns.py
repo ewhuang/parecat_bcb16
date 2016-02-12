@@ -1,6 +1,6 @@
 ### Author: Edward Huang
 
-from pymining import itemmining, assocrules, perftesting
+from pymining import itemmining, assocrules
 import time
 
 ### This script takes the symptoms and drugs prescribed to each patient, and
