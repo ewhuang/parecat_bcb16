@@ -7,10 +7,13 @@ import time
 ### attempts to mine the frequent patterns from these two sets across all of the
 ### patients in the ZRS dataset.
 
-MIN_SUP = 2
+MIN_SUP = 3
 
 if __name__ == '__main__':
     start_time = time.time()
+
+    # Used to map the Chinese phrases to ints.
+    symptom_drug_list = []
 
     # Dictionary, with keys as patient ids, as values as lists of symptoms.
     symptom_dct = {}
@@ -20,8 +23,12 @@ if __name__ == '__main__':
     for line in f:
         line = line.split()
         visit_no = line[0]
-        symptom_dct[visit_no] = line[1:]
+        symptoms = line[1:]
+        symptom_dct[visit_no] = symptoms
         symptom_visit_nos.add(visit_no)
+        for symptom in symptoms:
+            if symptom not in symptom_drug_list:
+                symptom_drug_list += [symptom]
     f.close()
 
     drug_dct = {}
@@ -38,6 +45,8 @@ if __name__ == '__main__':
         drug_dct[visit_no] = drugs
         for drug in drugs:
             drug_set.add(drug)
+            if drug not in symptom_drug_list:
+                symptom_drug_list += [drug]
         drug_visit_nos.add(visit_no)
     f.close()
 
@@ -46,14 +55,17 @@ if __name__ == '__main__':
     # shared_visit_nos = drug_visit_nos.intersection(symptom_visit_nos)
 
     # Lump drugs and symptoms together as transactions for each visit number.
-    print 'Mining associations...'
     transactions = []
     for visit_no in symptom_dct:
         # Skip visits that do not have a prescription.
         if visit_no not in drug_dct:
             continue
         symptoms = symptom_dct[visit_no]
+        symptoms = [symptom_drug_list.index(symptom) for symptom in symptoms]
         drugs = drug_dct[visit_no]
+        drugs = [symptom_drug_list.index(drug) for drug in drugs]
+        if len(symptoms) == 0 or len(drugs) == 0:
+            continue
         curr_trans = tuple(symptoms + drugs)
         transactions += [curr_trans]
 
@@ -64,6 +76,7 @@ if __name__ == '__main__':
 
     relim_input = itemmining.get_relim_input(transactions)
     item_sets = itemmining.relim(relim_input, min_support=MIN_SUP)
+    print 'Mining associations...'
     rules = assocrules.mine_assoc_rules(item_sets, min_support=MIN_SUP, min_confidence=0.5)
     print 'Writing out to file...'
     for cause_set, effect_set, support, confidence in rules:
@@ -71,10 +84,12 @@ if __name__ == '__main__':
         # in the rule.
         drug_in_rule = False
         for cause in cause_set:
+            cause = symptom_drug_list[cause]
             if cause in drug_set:
                 drug_in_rule = True
                 break
         for effect in effect_set:
+            cause = symptom_drug_list[effect]
             if effect in drug_set:
                 drug_in_rule = True
                 break
@@ -82,10 +97,10 @@ if __name__ == '__main__':
             continue
         # Write out the remaining association rules.
         for cause in cause_set:
-            out.write(cause + ', ')
+            out.write(symptom_drug_list[cause] + ', ')
         out.write('->' )
         for effect in effect_set:
-            out.write(effect + ', ')
+            out.write(symptom_drug_list[effect] + ', ')
         out.write('supp=%d, conf=%f\n' % (support, confidence))
     out.close
 
