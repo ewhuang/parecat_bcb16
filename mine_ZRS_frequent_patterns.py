@@ -46,6 +46,7 @@ if __name__ == '__main__':
     # shared_visit_nos = drug_visit_nos.intersection(symptom_visit_nos)
 
     # Lump drugs and symptoms together as transactions for each visit number.
+    print 'Mining associations...'
     transactions = []
     for visit_no in symptom_dct:
         # Skip visits that do not have a prescription.
@@ -64,6 +65,7 @@ if __name__ == '__main__':
     relim_input = itemmining.get_relim_input(transactions)
     item_sets = itemmining.relim(relim_input, min_support=MIN_SUP)
     rules = assocrules.mine_assoc_rules(item_sets, min_support=MIN_SUP, min_confidence=0.5)
+    print 'Writing out to file...'
     for cause_set, effect_set, support, confidence in rules:
         # For each association rule, check to see if there is at least one drug
         # in the rule.
