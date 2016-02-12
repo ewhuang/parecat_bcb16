@@ -14,3 +14,13 @@ make the directories.
 Lastly, we run print_topics.py to output the topic modeling results.
 
 >>> python print_topics.py
+
+
+__________________________________ZRS Data______________________________________
+First, download the ZRS data.
+
+$ python preprocess_ZRS_data
+
+Outputs two files, ZRS_patient_symptoms.txt. Each symptom is sorted by a visit
+id number.
+
