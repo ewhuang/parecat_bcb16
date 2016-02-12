@@ -64,11 +64,10 @@ if __name__ == '__main__':
     relim_input = itemmining.get_relim_input(transactions)
     item_sets = itemmining.relim(relim_input, min_support=MIN_SUP)
     rules = assocrules.mine_assoc_rules(item_sets, min_support=MIN_SUP, min_confidence=0.5)
-    print rules
     for cause_set, effect_set, support, confidence in rules:
         # For each association rule, check to see if there is at least one drug
         # in the rule.
-        # drug_in_rule = False
+        drug_in_rule = False
         for cause in cause_set:
             if cause in drug_set:
                 drug_in_rule = True
