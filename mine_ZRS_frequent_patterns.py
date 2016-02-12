@@ -7,7 +7,7 @@ import time
 ### attempts to mine the frequent patterns from these two sets across all of the
 ### patients in the ZRS dataset.
 
-MIN_SUP = 3
+MIN_SUP = 2
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     drug_dct = {}
     drug_set = set([])
-    drug_visit_nos = set([])
+    # drug_visit_nos = set([])
     f = open('./data/ZRS_patient_drugs.txt', 'r')
     for i, line in enumerate(f):
         # Skip the header.
@@ -42,12 +42,15 @@ if __name__ == '__main__':
         line = line.split()
         visit_no = line[0]
         drugs = line[1:]
-        drug_dct[visit_no] = drugs
+        if visit_no in drug_dct:
+            drug_dct[visit_no] += drugs
+        else:
+            drug_dct[visit_no] = drugs
         for drug in drugs:
             drug_set.add(drug)
             if drug not in symptom_drug_list:
                 symptom_drug_list += [drug]
-        drug_visit_nos.add(visit_no)
+        # drug_visit_nos.add(visit_no)
     f.close()
 
     # There are 1887 symptom visits, but only 1618 drug visits. However, all
