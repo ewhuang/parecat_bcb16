@@ -11,11 +11,13 @@ make the directories.
 
 >>> python lda_script.py
 
+Use the first block to run for the original data set.
+
 Lastly, we run print_topics.py to output the topic modeling results.
 
 >>> python print_topics.py
 
-
+Use the first block for original data.
 __________________________________ZRS Data______________________________________
 First, download the ZRS data.
 
@@ -42,3 +44,14 @@ $ python filter_ZRS_frequent_patterns.py
 
 Outputs norm_ZRS_freq_patterns.txt, which reformats each frequent pattern into
 a drug, symptom set relationship, along with their previous support.
+
+For topic modeling, run LDA for symptoms and drugs independently.
+
+$ python create_ZRS_lda_input.py
+
+$ python lda_script.py
+Use the second block to run for ZRS data.
+
+Lastly,
+$ python print_topics.py
+Also use the second block to run for ZRS data.

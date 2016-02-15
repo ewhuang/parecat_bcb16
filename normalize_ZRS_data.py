@@ -30,7 +30,7 @@ if __name__ == '__main__':
     for symptom in symptom_count_dct:
         count = symptom_count_dct[symptom]
         # counts += [count]
-        if count > 100 or count == 1:
+        if count > 0.1 * len(visits) or count == 1:
             common_symptoms.add(symptom)
 
     # plt.hist(counts, bins=xrange(0, 100, 5))
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     common_drugs = set([])
     for drug in drug_count_dct:
         count = drug_count_dct[drug]
-        if count > 100 or count == 1:
+        if count > 0.1 * len(visits) or count == 1:
             common_drugs.add(drug)
 
     # Write out a new file without common drugs.
