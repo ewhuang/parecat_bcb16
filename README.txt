@@ -55,3 +55,15 @@ Use the second block to run for ZRS data.
 Lastly,
 $ python print_topics.py
 Also use the second block to run for ZRS data.
+
+__________________________________HIS Data______________________________________
+
+First,
+
+$ python format_HIS_data.py
+
+Takes the original HIS spreadsheet, and takes the proper columns. Sent the text
+to Sheng for interpretation, and received HIS_clean_data.txt.
+
+$ python create_HIS_transactions.py
+
