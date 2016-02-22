@@ -65,7 +65,7 @@ if __name__ == '__main__':
     bad_elements = []
     for element in drug_symptom_counts:
         count = drug_symptom_counts[element]
-        if count > 0.05 * num_transactions or count < 5:
+        if count > 0.1 * num_transactions or count < 5:
             bad_elements += [element]
     for bad_element in bad_elements:
         del drug_symptom_counts[bad_element]
