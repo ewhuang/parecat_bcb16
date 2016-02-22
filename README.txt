@@ -67,3 +67,13 @@ to Sheng for interpretation, and received HIS_clean_data.txt.
 
 $ python create_HIS_transactions.py
 
+This creates a csv file where each row is a transaction, and the items are the
+indices of the symptoms or herbs as they appeared in the raw data.
+
+Next, we run FP Growth to find frequent patterns.
+$ cd python-fp-growth-master
+$ python -m fp_growth -s 5 ../HIS/data/HIS_transactions.csv > ../HIS/data/HIS_frequent_patterns.txt
+
+After finding frequent patterns, we then find the max patterns.
+$ python freq_to_max_HIS.py
+outputs a file to ./HIS/results/HIS_max_patterns.txt
