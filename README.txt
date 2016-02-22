@@ -72,7 +72,7 @@ indices of the symptoms or herbs as they appeared in the raw data.
 
 Next, we run FP Growth to find frequent patterns.
 $ cd python-fp-growth-master
-$ python -m fp_growth -s 5 ../HIS/data/HIS_transactions.csv > ../HIS/data/HIS_frequent_patterns.txt
+$ python -m fp_growth -s 5 ../HIS/data/HIS_transactions.csv > ../HIS/data/HIS_frequent_patterns_5.txt
 
 After finding frequent patterns, we then find the max patterns.
 $ python freq_to_max_HIS.py
