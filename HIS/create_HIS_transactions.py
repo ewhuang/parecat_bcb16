@@ -12,6 +12,8 @@ from collections import OrderedDict
 ### attempts to mine the frequent patterns from these two sets across all of the
 ### patients in the ZRS dataset.
 
+MIN_SUPP = 20
+
 def has_item(lst, st):
     for ele in lst:
         if ele in st:
@@ -65,7 +67,7 @@ if __name__ == '__main__':
     bad_elements = []
     for element in drug_symptom_counts:
         count = drug_symptom_counts[element]
-        if count > 0.1 * num_transactions or count < 5:
+        if count < MIN_SUPP:
             bad_elements += [element]
     for bad_element in bad_elements:
         del drug_symptom_counts[bad_element]
@@ -111,7 +113,7 @@ if __name__ == '__main__':
 
     # Write out to a CSV file.
     out = open('./data/HIS_transactions.csv', 'w')
-    for transaction in transactions:
+    for i, transaction in enumerate(transactions):
         out.write(','.join(transaction) + '\n')
     out.close()
 

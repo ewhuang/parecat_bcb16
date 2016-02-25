@@ -7,6 +7,7 @@ import operator
 import ast
 import sys
 from collections import OrderedDict
+import time
 
 ### This script takes the frequent patterns mined for the HIS data and keeps
 ### only the closed patterns.
@@ -20,6 +21,8 @@ def has_ele(lst, st):
 if __name__ == '__main__':
     reload(sys)
     sys.setdefaultencoding('cp1252')
+
+    start_time = time.time()
 
     drug_and_symptoms = []
     f = open('./data/HIS_herb_symptom_mappings.txt', 'r')
@@ -44,7 +47,9 @@ if __name__ == '__main__':
 
     f = open('./data/HIS_frequent_patterns.txt', 'r')
     for i, line in enumerate(f):
-        print i
+        if i % 100000 == 0:
+            print str(i / float(113247382)) + "%",
+            print ' done, took %f seconds.' % (time.time() - start_time)
         # Parse file contents.
         close_bracket_index = line.index(']') + 1
         curr_pattern = line[:close_bracket_index]
