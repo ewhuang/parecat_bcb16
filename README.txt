@@ -70,10 +70,28 @@ $ python create_HIS_transactions.py
 This creates a csv file where each row is a transaction, and the items are the
 indices of the symptoms or herbs as they appeared in the raw data.
 
+______________________
 Next, we run FP Growth to find frequent patterns.
 $ cd python-fp-growth-master
-$ python -m fp_growth -s 5 ../HIS/data/HIS_transactions.csv > ../HIS/data/HIS_frequent_patterns_5.txt
+$ python -m fp_growth -s 5 ../HIS/data/HIS_transactions.csv > ../HIS/data/HIS_frequent_patterns.txt
 
 After finding frequent patterns, we then find the max patterns.
 $ python freq_to_max_HIS.py
 outputs a file to ./HIS/results/HIS_max_patterns.txt
+______________________
+To directly mine max pattern after running create_HIS_transactions.py
+$ cd fpgrowth-c/fp-growth/src
+$ make
+$ ../fpgrowth-c/fpgrowth/src/fpgrowth -tm -s-20 -b, ./data/HIS_transactions.csv ./results/HIS_raw_max_patterns.txt
+
+Then, clean the output.
+$ python clean_fpgrowth_output.py
+Outputs ./results/HIS_max_patterns.py
+
+To rank pairs of words by mutual information,
+$ python rank_word_pairs.py mi
+
+We can use KL divergence to compute dissimilarities between each pair of symptom
+and herb.
+$ python kl_divergence.py norm
+Add keyword norm to parse normalized data.
