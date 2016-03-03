@@ -13,9 +13,10 @@ from itertools import starmap, izip
 ### of a transaction to sum to 1, as each row is originally summed to 1 (they
 ### are probabilities).
 
-TOPIC_NUM = 11
+TOPIC_NUM = 15
 SMOOTH_VAL = 0
-NUM_TOPICS = 100
+NUM_TOPICS = 97
+NUM_RESULTS = 1000
 
 # Computes cosine similarity between two lists of floats.
 def cosine_similarity(v1,v2):
@@ -169,9 +170,9 @@ if __name__ == '__main__':
             dot_dct[(herb, symp)] = dot_product(hv, sv)
 
     # Writing out to file.
-    dot_dct = sorted(dot_dct.items(), key=lambda x: x[1], reverse=True)
-    out = open('./results/%d_%sdot.topic%d' % (
-        NUM_TOPICS, norm, TOPIC_NUM), 'w')
+    dot_dct = sorted(dot_dct.items(), key=lambda x: x[1], reverse=True)[:NUM_RESULTS]
+    out = open('./results/%d_%sdot.topic%d_%d' % (
+        NUM_TOPICS, norm, TOPIC_NUM, NUM_RESULTS), 'w')
     for (herb, symp), dp in dot_dct:
         out.write('%s\t%s\t%f\n' % (herb, symp, dp))
     out.close()
