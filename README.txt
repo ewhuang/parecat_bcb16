@@ -95,3 +95,8 @@ We can use KL divergence to compute dissimilarities between each pair of symptom
 and herb.
 $ python kl_divergence.py norm
 Add keyword norm to parse normalized data.
+
+_____________NTU DATABASE_____________
+$ python ntu_mine_transitive_t_scores.py
+Run this to mine the transitive TCM-disease and gene-TCM transitive t-scores
+from the NTU database.
