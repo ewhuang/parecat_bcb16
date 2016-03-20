@@ -1,7 +1,6 @@
 ### Author: Edward Huang
 
 from sklearn.metrics import precision_recall_curve, roc_auc_score, auc
-from collections import OrderedDict
 
 ### This script generates predictive probabilities for herbs, symptoms, and 
 ### diseases.
@@ -51,6 +50,7 @@ def process_list(lst):
     lst = [i - 1 for i in lst]
     return lst
 
+# Read transactions from files. Keyword is either "test" or "training".
 def read_transactions(keyword):
     # List of disease, symptom, herb tuples for each transaction.
     transactions = []
@@ -64,7 +64,7 @@ def read_transactions(keyword):
         diseases = process_list(diseases)
         symptoms = process_list(symptoms)
         # Remove symptoms with index > 3000
-        symptoms = [i for i in symptoms if i < 3000]
+        symptoms = [i for i in symptoms if i < NUM_SYMPTOMS]
         herbs = process_list(herbs)
         transactions += [(diseases, symptoms, herbs)]
     f.close()
