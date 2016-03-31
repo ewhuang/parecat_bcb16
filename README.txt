@@ -100,3 +100,18 @@ _____________NTU DATABASE_____________
 $ python ntu_mine_transitive_t_scores.py
 Run this to mine the transitive TCM-disease and gene-TCM transitive t-scores
 from the NTU database.
+
+____________EFFECTIVE TAGGING_____________
+$ cd HIS
+$ python discontinued_herbs.py
+Writes out the time series for each patient and mines the discontinued herbs and
+symptoms.
+Currently, the definition of a discontinued element is if it does not appear
+in the last two patient visits. A discontinued herb treats a symptom
+successfully if their vectors are the same.
+Also writes out to file successful_discontinued_herb_symptom_pairs.txt, which
+contains all of the successful discontinued herbs, along with their counts, 
+the corresponding symptom counts, and how often they count as successful
+treatments.
+
+$ python onset_herbs.py
