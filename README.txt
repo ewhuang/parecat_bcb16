@@ -115,3 +115,6 @@ the corresponding symptom counts, and how often they count as successful
 treatments.
 
 $ python onset_herbs.py
+Finds which herbs have replaced other herbs. Basically, two herbs must combine
+to exactly equal a symptom vector. Also, the replaced herb's last 1 must be
+rigth before the onset herb's first one.
