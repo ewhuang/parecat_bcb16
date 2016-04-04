@@ -1,6 +1,7 @@
 ### Author: Edward Huang
 
 from discontinued_herbs import *
+import math
 
 ### This script provides functions for retrieving basic statistics on the time
 ### series data.
@@ -155,21 +156,29 @@ def main():
     # Sort by successes - failures.
     success_minus_failure_dct = {}
     for key in successful_treatment_dct:
+        herb, symptom = key
         difference = successful_treatment_dct[key]
         if key in failed_treatment_dct:
             difference -= failed_treatment_dct[key]
-        success_minus_failure_dct[key] = difference
+        herb_count = float(herb_counts[herb])
+        symptom_count = float(symptom_counts[symptom])
+        denom = math.sqrt(herb_count * symptom_count)
+        success_minus_failure_dct[key] = difference / denom
     # Write out treatment successes and failures.
     sorted_treatments = sorted(success_minus_failure_dct.items(),
         key=operator.itemgetter(1), reverse=True)
     out = open('./results/herb_treatments_successes_and_failures.txt', 'w')
-    out.write('herb\therb_count\tsymptom\tsymptom_count\tsuccess_count\tfailure_count\tdifference\n')
+    # Write header line.
+    out.write('herb\therb_count\tsymptom\tsymptom_count\tsuccess_count\t')
+    out.write('failure_count\tdifference/sqrt(hc*sc)\n')
     for (herb, symptom), count in sorted_treatments:
         success_count = successful_treatment_dct[(herb, symptom)]
+        if success_count < 5:
+            continue
         failure_count = 0
         if (herb, symptom) in failed_treatment_dct:
             failure_count = failed_treatment_dct[(herb, symptom)]
-        out.write('%s\t%d\t%s\t%d\t%d\t%d\t%d\n' % (herb, herb_counts[herb],
+        out.write('%s\t%d\t%s\t%d\t%d\t%d\t%f\n' % (herb, herb_counts[herb],
             symptom, symptom_counts[symptom], success_count, failure_count,
             count))
     out.close()
