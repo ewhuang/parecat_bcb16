@@ -118,3 +118,7 @@ $ python onset_herbs.py
 Finds which herbs have replaced other herbs. Basically, two herbs must combine
 to exactly equal a symptom vector. Also, the replaced herb's last 1 must be
 rigth before the onset herb's first one.
+
+$ python get_time_series_statistics.py
+Outputs files for side effect mining, disease complication mining, and herb-
+symptom treatment mining.
