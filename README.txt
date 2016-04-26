@@ -122,3 +122,8 @@ rigth before the onset herb's first one.
 $ python get_time_series_statistics.py
 Outputs files for side effect mining, disease complication mining, and herb-
 symptom treatment mining.
+
+
+_____CLUSTERING_____
+$ python cluster_records.py
+Cluster using k-means.
