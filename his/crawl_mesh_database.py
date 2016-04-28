@@ -10,14 +10,14 @@ url_format = 'http://www.ncbi.nlm.nih.gov/mesh/?term=%s&report=Full&format=text'
 
 # Go through the dictionary and get the MeSH ID's.
 def get_mesh_ids():
-    mesh_ids = []
+    mesh_ids = {}
     f = open('./data/herb_symptom_dictionary.txt', 'r')
     for i, line in enumerate(f):
         if i == 0:
             continue
         line = line.strip().split('\t')
         if 'MeSH' in line:
-            mesh_ids += [line[4]]
+            mesh_ids[line[4]] = line[2].lower()
     f.close()
     return mesh_ids
 
@@ -62,7 +62,7 @@ def main():
     progress_counter = 0.0
     num_pages = len(mesh_ids)
 
-    for mesh_id in mesh_ids:
+    for mesh_id in [mesh_ids.keys()[0]]:
         # Read in page html.
         f = urllib.urlopen(url_format % mesh_id)
         html = f.read().split('All MeSH Categories')
@@ -70,6 +70,11 @@ def main():
             continue
         # Get the symptom name.
         symptom = get_symptom(html)
+
+        # Skip if there's a mismatch between the dictionary and the database.
+        if symptom not in mesh_ids[mesh_id]:
+            continue
+
         # Get the edge list for each tree in the symptom html page.
         for tree in html[1:]:
             edge_list = process_tree(tree, symptom)
