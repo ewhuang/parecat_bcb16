@@ -61,7 +61,6 @@ def main():
     # Progress variables.
     progress_counter = 0.0
     num_pages = len(mesh_ids)
-    mesh_ids = [mesh_ids[293]]
 
     for mesh_id in mesh_ids:
         # Read in page html.
