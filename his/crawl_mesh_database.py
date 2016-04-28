@@ -62,7 +62,7 @@ def main():
     progress_counter = 0.0
     num_pages = len(mesh_ids)
 
-    for mesh_id in [mesh_ids.keys()[0]]:
+    for mesh_id in mesh_ids:
         # Read in page html.
         f = urllib.urlopen(url_format % mesh_id)
         html = f.read().split('All MeSH Categories')
