@@ -5,6 +5,7 @@ import urllib
 
 ### This script crawls the MeSH database and makes edges for each of the
 ### symptoms.
+### Run time: 8 minutes.
 
 url_format = 'http://www.ncbi.nlm.nih.gov/mesh/?term=%s&report=Full&format=text'
 
