@@ -61,13 +61,14 @@ def main():
     # Progress variables.
     progress_counter = 0.0
     num_pages = len(mesh_ids)
+    mesh_ids = [mesh_ids[293]]
 
     for mesh_id in mesh_ids:
-    # for mesh_id in ['D020521']:
         # Read in page html.
         f = urllib.urlopen(url_format % mesh_id)
         html = f.read().split('All MeSH Categories')
-
+        if len(html) == 1:
+            continue
         # Get the symptom name.
         symptom = get_symptom(html)
         # Get the edge list for each tree in the symptom html page.
@@ -80,7 +81,7 @@ def main():
 
         # Update progress.
         progress_counter += 1
-        print 'Progress: %f%%...' % (progress_counter / num_pages)
+        print 'Progress: %f%%...' % (progress_counter / num_pages * 100)
 
     # Write out to file.
     out = open('./results/crawled_mesh_symptom_edges.txt', 'w')
