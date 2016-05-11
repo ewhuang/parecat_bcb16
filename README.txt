@@ -125,5 +125,18 @@ symptom treatment mining.
 
 
 _____CLUSTERING_____
-$ python cluster_records.py
-Cluster using k-means.
+$ python cluster_records.py symptoms/herbs/both tf/no_tf top/section/subsection
+Cluster on patient records using k-means, spectral, and agglomerative.
+
+To create the matrix for embedding.
+$ python create_herb_symptom_embedding_matrix.py
+
+Tests the embedding similarity matrix. Generates a file with the top similarity
+scores and their corresponding pairs.
+$ python test_embedding_similarity_matrix.py
+
+Uses the similarity scores from the embedding vectors to improve clustering.
+$ python cluster_with_embedding.py
+
+Clusters on the stomach disease data, and finds the symptoms and herbs.
+$ python cluster_stomach_disease_subcategories.py

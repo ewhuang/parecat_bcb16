@@ -90,6 +90,12 @@ if __name__ == '__main__':
     for transaction in bad_transactions:
         transactions.remove(transaction)
 
+    # Write out to a CSV file.
+    out = open('./data/HIS_transactions_words.csv', 'w')
+    for i, transaction in enumerate(transactions):
+        out.write(','.join(transaction) + '\n')
+    out.close()
+
     # Change the herbs and symptoms to their corresponding indices.
     herb_and_symptoms = all_herbs + all_symptoms
     for i, transaction in enumerate(transactions):
