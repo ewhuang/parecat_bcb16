@@ -64,11 +64,14 @@ $ python format_HIS_data.py
 
 Takes the original HIS spreadsheet, and takes the proper columns. Sent the text
 to Sheng for interpretation, and received HIS_clean_data.txt.
+Remove the � character from the clean_data.
 
 $ python create_HIS_transactions.py
 
 This creates a csv file where each row is a transaction, and the items are the
 indices of the symptoms or herbs as they appeared in the raw data.
+Delete the rows that the script prints out. These rows have no herbs. Run
+the scrip again.
 
 ______________________
 Next, we run FP Growth to find frequent patterns.
@@ -131,12 +134,11 @@ Cluster on patient records using k-means, spectral, and agglomerative.
 To create the matrix for embedding.
 $ python create_herb_symptom_embedding_matrix.py
 
-Tests the embedding similarity matrix. Generates a file with the top similarity
-scores and their corresponding pairs.
-$ python test_embedding_similarity_matrix.py
-
 Uses the similarity scores from the embedding vectors to improve clustering.
-$ python cluster_with_embedding.py
+$ python cluster_with_embedding.py symptoms/herbs/both top/section/subsection
+            average/complete full/partial sim_threshold
 
 Clusters on the stomach disease data, and finds the symptoms and herbs.
-$ python cluster_stomach_disease_subcategories.py
+$ python stomach_data_clustering.py symptoms/herbs/both average/complete
+    sim_threshold num_clusters
+The best parameters are already tuned.

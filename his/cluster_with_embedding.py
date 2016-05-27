@@ -5,10 +5,9 @@
 
 from collections import OrderedDict
 import numpy as np
-import operator
 from scipy.stats import entropy
 from sklearn.cluster import AgglomerativeClustering, KMeans, SpectralClustering
-from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics.cluster import adjusted_rand_score, completeness_score
 import random
 import sys
 import time
@@ -22,60 +21,51 @@ def read_medical_data(file_num, vector_type):
     given file number, and outputs a dictionary where the elements for a 
     patient contains the vector_type. Can be herbs, symptoms, or both.
     '''
-    # These two lists contain all of the unique symptoms and herbs in a
-    # particular document.
-    symptom_set, herb_set = [], []
-    num_patient_visits = 0
-
-    # Keys: (patient ID, section label, subsection label, document number)
-    # Values: Lists of symptoms and/or herbs for the patient, depending on
-    # vector_type.
+    all_symptom_list, all_herb_list = [], []
     patient_dct = {}
     f = open('./data/medical_data_%d.txt' % file_num, 'r')
-    for i, line in enumerate(f):
-        (visit_symptoms, visit_herbs, patient_id, section,
+    for line in f:
+        (patient_symptoms, patient_herbs, patient_id, section,
             subsection) = line.split('\t')
 
         # Add symptoms and herbs based on the keyword.
         if vector_type == 'symptoms':
-            visit_symptoms = visit_symptoms.split(',')
-            visit_herbs = []
+            patient_symptoms = patient_symptoms.split(',')
+            patient_herbs = []
         elif vector_type == 'herbs':
-            visit_symptoms = []
-            visit_herbs = visit_herbs.split(',')
+            patient_symptoms = []
+            patient_herbs = patient_herbs.split(',')
         elif vector_type == 'both':
-            visit_symptoms = visit_symptoms.split(',')
-            visit_herbs = visit_herbs.split(',')
+            patient_symptoms = patient_symptoms.split(',')
+            patient_herbs = patient_herbs.split(',')
 
         # Add to the master lists of symptoms and herbs.
-        symptom_set += visit_symptoms
-        herb_set += visit_herbs
+        all_symptom_list += patient_symptoms
+        all_herb_list += patient_herbs
 
         # Add each patient ID transaction.
-        key = (patient_id, section, subsection, file_num)
+        key = (patient_id.strip(), section.strip(), subsection.strip(),
+            file_num)
         if key in patient_dct:
-            patient_dct[key] += visit_symptoms + visit_herbs
+            patient_dct[key] += patient_symptoms + patient_herbs
         else:
-            patient_dct[key] = visit_symptoms + visit_herbs
-
-        # Increment the number of patient visits.
-        num_patient_visits += 1
-
+            patient_dct[key] = patient_symptoms + patient_herbs
     f.close()
 
-    return symptom_set, herb_set, patient_dct, num_patient_visits
+    # Sanity checks.
+    if vector_type == 'symptoms':
+        assert all_herb_list == []
+    elif vector_type == 'herbs':
+        assert all_symptom_list == []
+
+    return all_symptom_list, all_herb_list, patient_dct
 
 def get_label_to_index_conversions(labels):
     '''
     Takes in a list of labels. Returns a set of true labels, mapped to indices,
     and the set of unique labels.
     '''
-    # Mapping each section to an index.
-    all_sections = list(set(labels))
-    true_labels = []
-    for label in labels:
-        true_labels += [all_sections.index(label)]
-    return true_labels, len(all_sections)
+    return [labels.index(label) for label in labels]
 
 def get_medicine_dictionary_file():
     '''
@@ -132,12 +122,11 @@ def get_similarity_matrix(feature_list, similarity_threshold):
 
     dictionary_herb_symptom_list = get_medicine_dictionary_file().keys()
     
-    similarity_dict = {}
     f = open('./results/similarity_matrix.txt', 'r')
     for i, line in enumerate(f):
         element_a, element_b, score = line.split()
 
-        score = float(score)
+        score = abs(float(score))
         if score < similarity_threshold:
             continue
 
@@ -188,16 +177,29 @@ def get_master_patient_dct(vector_type, abridged):
     master_patient_dct = {}
     feature_list = []
     for i in range(1, 4):
-        (symptom_list, herb_list, patient_dct,
-            num_visits) = read_medical_data(i, vector_type)
+        (symptom_list, herb_list, patient_dct) = read_medical_data(i,
+            vector_type)
 
         # Update master patient dictionary with current document.
         master_patient_dct.update(patient_dct)
 
-        herb_list = get_semifrequent_terms(herb_list, 0,
-            0.15 * len(patient_dct))
-        symptom_list = get_semifrequent_terms(symptom_list, 1,
-            0.05 * len(patient_dct))
+        hb = 2
+        ha = 0.1
+        if vector_type == 'herbs':
+            hb = 1
+        herb_list = get_semifrequent_terms(herb_list, hb,
+            ha * len(patient_dct))
+
+        # Optimal lower bound is different between symptom features and both
+        # features.
+        sb = 5
+        sa = 0.2
+        if vector_type == 'symptoms':
+            sb = 1
+            sa = 0.05
+
+        symptom_list = get_semifrequent_terms(symptom_list, sb,
+            sa * len(patient_dct))
 
         if abridged:
             for element in symptom_list + herb_list:
@@ -247,24 +249,43 @@ def get_attribute_by_patient_matrix(feature_list, master_patient_dct):
     return (np.matrix(patient_by_attribute_matrix).T, section_labels,
         subsection_labels, file_num_labels)
 
+def get_top_k_elements_per_row_sim_mat(similarity_matrix, k):
+    '''
+    Introduces another parameter, k, where we only keep the top k similarity
+    scores per row in the similarity matrix.
+    '''
+    for i, row in enumerate(similarity_matrix):
+        k = len(row) - k
+        kth_largest = np.partition(row, k)[k]
+        similarity_matrix[i] = [ele if ele >= kth_largest else 0 for ele in row]
+    return similarity_matrix
+
+def upper_bound_matrix(embedded_matrix):
+    '''
+    Makes the maximum value of a value in the similarity matrix 1.
+    '''
+    for i, row in enumerate(embedded_matrix):
+        embedded_matrix[i] = [ele if ele <= 1 else 1 for ele in row]
+    return embedded_matrix
+
 def main():
     # Sorting out arguments.
-    if len(sys.argv) != 6:
-        print('Usage: %s symptoms/herbs/both top/section/subsection '
-            'average/complete full/partial sim_threshold' % sys.argv[0])
+    if len(sys.argv) != 4:
+        print('Usage: %s symptoms/herbs/both top/section/subsection'
+            ' similarity_threshold' % sys.argv[0])
         exit()
     vector_type = sys.argv[1]
     assert vector_type in ['symptoms', 'herbs', 'both']
     label_type = sys.argv[2]
     assert label_type in ['top', 'section', 'subsection']
-    linkage = sys.argv[3]
-    assert linkage in ['average', 'complete']
-    # 'full' to use all herbs and symptoms. 'partial' to use only dictionary.
-    abridged = (sys.argv[4] == 'partial')
-    similarity_threshold = float(sys.argv[5])
+    # linkage = sys.argv[3]
+    # assert linkage in ['average', 'complete']
+    # # 'full' to use all herbs and symptoms. 'partial' to use only dictionary.
+    # abridged = (sys.argv[4] == 'partial')
+    similarity_threshold = float(sys.argv[3])
 
     feature_list, master_patient_dct = get_master_patient_dct(vector_type,
-        abridged)
+        False)
     
     # Get the patient by attribute matrix.
     (attribute_by_patient_matrix, section_labels, subsection_labels,
@@ -273,20 +294,25 @@ def main():
 
     # Picking the type of labels.
     if label_type == 'top':
-        true_labels, num_clusters = get_label_to_index_conversions(
-            file_num_labels)
-        assert num_clusters == 3
+        true_labels = get_label_to_index_conversions(file_num_labels)
     elif label_type == 'section':
-        true_labels, num_clusters = get_label_to_index_conversions(
-            section_labels)
+        true_labels = get_label_to_index_conversions(section_labels)
     elif label_type == 'subsection':
-        true_labels, num_clusters = get_label_to_index_conversions(
-            subsection_labels)
+        true_labels = get_label_to_index_conversions(subsection_labels)
 
-    # # Uncomment this block if making changes to similarity matrix.
+    num_clusters = len(set(true_labels))
+
+    # Uncomment this block if making changes to similarity matrix.
     similarity_matrix = get_similarity_matrix(feature_list,
         similarity_threshold)
+
+    # similarity_matrix = get_top_k_elements_per_row_sim_mat(
+    #     similarity_matrix, top_k)
+
     embedded_matrix = similarity_matrix * attribute_by_patient_matrix
+
+    # embedded_matrix = upper_bound_matrix(np.array(embedded_matrix))
+
     # np.savetxt('./results/embedded_%s_matrix.txt' % vector_type,
     #     embedded_matrix)
     # exit()
@@ -294,19 +320,8 @@ def main():
     # embedded_matrix = np.loadtxt('./results/embedded_%s_matrix.txt' % (
     #     vector_type))
 
-    # Change all cells greater than 1 back to 1.
-    # def min_and_one(ele):
-    #     if ele < 0.5:
-    #         return 0
-    #     return ele
-    # min_and_one = np.vectorize(min_and_one)
-    # embedded_matrix = min_and_one(embedded_matrix)
-
     # Get the list of entropies for the embedded matrix.
     entropy_list = np.apply_along_axis(entropy, axis=1, arr=embedded_matrix)
-
-    # out = open('./results/embedding_clusters_%s_%s_%s_%s.txt' % (vector_type,
-    #     label_type, similarity_method, linkage), 'w')
 
     # Delete the percentage% lowest entropy elements.
     for percentage in [p / 20.0 for p in range(20)]:
@@ -322,20 +337,43 @@ def main():
         feature_vectors = np.delete(feature_vectors,
             att_indices_to_delete, axis=0).T
 
-        # random_state = 170
+        # random_state = 5191993
         # y_pred = KMeans(n_clusters=num_clusters,
         #     random_state=random_state).fit_predict(feature_vectors)
         # print 'k-means %g' % (adjusted_rand_score(true_labels, y_pred))
 
         # y_pred = SpectralClustering(n_clusters=num_clusters,
         #     eigen_solver='arpack', random_state=random_state, 
-        #     affinity="nearest_neighbors").fit_predict(feature_vectors)
+        #     affinity="cosine").fit_predict(feature_vectors)
         # print 'spectral %g' % (adjusted_rand_score(true_labels, y_pred))
 
         y_pred = AgglomerativeClustering(n_clusters=num_clusters,
-            affinity='cosine', linkage=linkage).fit_predict(feature_vectors)
+            affinity='cosine', linkage='average').fit_predict(
+            feature_vectors)
+        # cluster_dct = {}
+        # for i, cluster_label in enumerate(y_pred):
+        #     section_label = section_labels[i]
+        #     subsection_label = subsection_labels[i]
+        #     patient = (section_label, subsection_label)
+        #     if cluster_label in cluster_dct:
+        #         cluster_dct[cluster_label] += [patient]
+        #     else:
+        #         cluster_dct[cluster_label] = [patient]
+
+        # out = open('./results/embedding_patient_clusters.txt', 'w')
+        # for cluster_label in cluster_dct:
+        #     patient_cluster = cluster_dct[cluster_label]
+        #     for section_label, subsection_label in patient_cluster:
+        #         out.write('%s,%s\t' % (section_label, subsection_label))
+        #     out.write('\n')
+        # out.close()
+
+
         rand_index = adjusted_rand_score(true_labels, y_pred)
-        print rand_index
+        # if rand_index >= 0.292420:
+        print rand_index, percentage
+        # compl_score = completeness_score(true_labels, y_pred)
+        # print compl_score
         # out.write(str(rand_index) + '\n')
     # out.close()
 

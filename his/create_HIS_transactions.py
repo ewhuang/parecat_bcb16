@@ -9,45 +9,24 @@ import csv
 from collections import OrderedDict
 
 ### This script takes the symptoms and herbs prescribed to each patient, and
-### attempts to mine the frequent patterns from these two sets across all of the
-### patients in the HIS dataset. Also creates an inverted index.
+### attempts to mine the frequent patterns from these two sets across all of
+### the patients in the HIS dataset. Also creates an inverted index.
+### Run time: 20 seconds.
 
-MIN_SUPP = 20
-
-def has_item(lst, st):
-    for ele in lst:
-        if ele in st:
-            return True
-    return False
-
-if __name__ == '__main__':
-    reload(sys)
-    sys.setdefaultencoding('cp1252')
-
-    start_time = time.time()
-
-    # Reading in the index dictionary for herbs and symptoms.
-    herb_symptom_counts = OrderedDict({})
-    transactions = []
-
+def get_dictionary_elements(element_type):
     # Keeps track of all of the herbs and symptoms. This is mined by Sheng.
-    all_herbs = []
-    f = open('./data/herb_dct.txt', 'r')
+    all_elements = []
+    f = open('./data/%s_dct.txt' % element_type, 'r')
     for i, line in enumerate(f):
-        herb, count = line.strip().split('\t')
-        all_herbs += [herb]
+        element, count = line.strip().split('\t')
+        all_elements += [element]
     f.close()
+    return all_elements
 
-    all_symptoms = []
-    f = open('./data/sym_dct.txt', 'r')
-    for i, line in enumerate(f):
-        symp, count = line.strip().split('\t')
-        all_symptoms += [symp]
-    f.close()
-
+def get_transactions_and_inverse_index(all_herbs, all_symptoms):
     # Inverted index creation.
     invert_index_dct = {}
-
+    transactions = []
     f = open('./data/HIS_clean_data.txt', 'r')
     for i, line in enumerate(f):
         # Skip header
@@ -72,34 +51,42 @@ if __name__ == '__main__':
             if symptom in all_symptoms:
                 current_symptoms += [symptom]
 
-        transaction = current_symptoms + current_herbs
         # Add element to the inverted index.
-        for element in transaction:
+        for element in current_symptoms + current_herbs:
             if element in invert_index_dct:
                 invert_index_dct[element] += [str(i)]
             else:
                 invert_index_dct[element] = [str(i)]
-        transactions += [transaction]
+        transactions += [(current_symptoms, current_herbs)]
     f.close()
+    return transactions, invert_index_dct
 
-    # Remove transactions that do not have at least one herb and symptom.
-    bad_transactions = []
-    for transaction in transactions:
-        if not has_item(transaction, all_herbs) or not has_item(transaction, all_symptoms):
-            bad_transactions += [transaction]
-    for transaction in bad_transactions:
-        transactions.remove(transaction)
+def main():
+    reload(sys)
+    sys.setdefaultencoding('cp1252')
+
+    all_herbs = get_dictionary_elements('herb')
+    all_symptoms = get_dictionary_elements('sym')
+
+    transactions, invert_index_dct = get_transactions_and_inverse_index(
+        all_herbs, all_symptoms)
 
     # Write out to a CSV file.
     out = open('./data/HIS_transactions_words.csv', 'w')
     for i, transaction in enumerate(transactions):
-        out.write(','.join(transaction) + '\n')
+        symptoms, herbs = transaction
+        if len(symptoms) == 0 or len(herbs) == 0:
+            print i
+            continue
+        out.write(','.join(symptoms) + '\t' + ','.join(herbs) + '\n')
     out.close()
 
     # Change the herbs and symptoms to their corresponding indices.
     herb_and_symptoms = all_herbs + all_symptoms
     for i, transaction in enumerate(transactions):
-        transactions[i] = [str(herb_and_symptoms.index(item)) for item in transaction]
+        transaction = transaction[0] + transaction[1]
+        transactions[i] = [str(herb_and_symptoms.index(item)
+            ) for item in transaction]
 
     # Write out to a CSV file.
     out = open('./data/HIS_transactions.csv', 'w')
@@ -113,4 +100,7 @@ if __name__ == '__main__':
         out.write(element + '\t' + ' '.join(invert_index_dct[element]) + '\n')
     out.close()
 
+if __name__ == '__main__':
+    start_time = time.time()
+    main()
     print "---%f seconds---" % (time.time() - start_time)
