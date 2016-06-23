@@ -61,14 +61,18 @@ def read_stomach_data(vector_type, disease):
 
         # Merge in a patient if he is already in the dictionary.
         key = (name, birthday)
+        # if key in merged_patient_dct:
+        #     merged_patient_dct[key][0] = merged_patient_dct[key][0].union(
+        #         patient_symptoms)
+        #     merged_patient_dct[key][1] = merged_patient_dct[key][1].union(
+        #         patient_herbs)
+        # else:
+        #     merged_patient_dct[key] = [set(patient_symptoms), set(
+        #         patient_herbs)]
         if key in merged_patient_dct:
-            merged_patient_dct[key][0] = merged_patient_dct[key][0].union(
-                patient_symptoms)
-            merged_patient_dct[key][1] = merged_patient_dct[key][1].union(
-                patient_herbs)
+            merged_patient_dct[key] += [(patient_symptoms, patient_herbs)]
         else:
-            merged_patient_dct[key] = [set(patient_symptoms), set(
-                patient_herbs)]
+            merged_patient_dct[key] = [(patient_symptoms, patient_herbs)]
 
         # Add to the master lists of symptoms and herbs.
         for symptom in patient_symptoms:
@@ -255,10 +259,11 @@ def write_similar_patients(sorted_distances, disease, patient_dnd_list,
     merged_patient_dct):
     out = open('./results/most_similar_stomach_patient_pairs_%s.txt' %
         disease, 'w')
-    out.write('disease\tname\tdate_of_birth\tsymptoms\therbs\tcosine\n')
+    out.write('cosine\tdisease\tname\tbirthday\tsymptoms\therbs\n')
 
     # Determines the number of pairs to write out.
     pair_counter = 0
+    written_pairs = []
     for (i, j), distance in sorted_distances:
         if pair_counter == 30:
             break
@@ -270,13 +275,33 @@ def write_similar_patients(sorted_distances, disease, patient_dnd_list,
         if name_i == name_j and birthday_i == birthday_j:
             continue
 
-        symptoms_i, herbs_i = merged_patient_dct[(name_i, birthday_i)]
-        symptoms_j, herbs_j = merged_patient_dct[(name_j, birthday_j)]
+        if (name_i, birthday_i, name_j, birthday_j) in written_pairs or (
+            name_j, birthday_j, name_i, birthday_i) in written_pairs:
+            continue
 
-        out.write('%s\t%s\t%s\t%s\t%s\t%g\n' % (disease_i, name_i, birthday_i,
-            ','.join(symptoms_i), ','.join(herbs_i), 1 - distance))
-        out.write('%s\t%s\t%s\t%s\t%s\t%g\n' % (disease_j, name_j, birthday_j,
-            ','.join(symptoms_j), ','.join(herbs_j), 1 - distance))
+        written_pairs += [(name_i, birthday_i, name_j, birthday_j)]
+
+        patient_attribute_list_i = merged_patient_dct[(name_i, birthday_i)]
+        patient_attribute_list_j = merged_patient_dct[(name_j, birthday_j)]
+
+        out.write('%g\t%s\t%s\t%s\t' % (1 - distance, disease_i, name_i,
+            birthday_i))
+        for i_index, (symptoms, herbs) in enumerate(patient_attribute_list_i):
+            if i_index != 0:
+                out.write('\t\t\t\t')
+            out.write('%s\t%s\n' % (','.join(symptoms), ','.join(herbs)))
+
+        out.write('%g\t%s\t%s\t%s\t' % (1 - distance, disease_j, name_j,
+            birthday_j))
+        for j_index, (symptoms, herbs) in enumerate(patient_attribute_list_j):
+            if j_index != 0:
+                out.write('\t\t\t\t')
+            out.write('%s\t%s\n' % (','.join(symptoms), ','.join(herbs)))
+
+        # out.write('%s\t%s\t%s\t%s\t%s\t%g\n' % (disease_i, name_i, birthday_i,
+        #     ','.join(symptoms_i), ','.join(herbs_i), 1 - distance))
+        # out.write('%s\t%s\t%s\t%s\t%s\t%g\n' % (disease_j, name_j, birthday_j,
+        #     ','.join(symptoms_j), ','.join(herbs_j), 1 - distance))
         out.write('\n')
 
         pair_counter += 1
@@ -319,10 +344,16 @@ def write_clusters(cluster_dct, disease, patient_dnd_list, merged_patient_dct):
                 continue
             previously_written_patients += [key]
 
-            symptoms, herbs = merged_patient_dct[key]
-
-            out.write('%s\t%s\t%s\t%s\t%s\t%s\n' % (clus_id, patient_disease,
-                name, birthday, ','.join(symptoms), ','.join(herbs)))
+            patient_attribute_list = merged_patient_dct[key]
+            out.write('%s\t%s\t%s\t%s\t' % (clus_id, patient_disease, name,
+                birthday))
+            for i, (symptoms, herbs) in enumerate(patient_attribute_list):
+                if i != 0:
+                    out.write('\t\t\t\t')
+                out.write('%s\t%s\n' % (','.join(symptoms),
+                    ','.join(herbs)))
+            # out.write('%s\t%s\t%s\t%s\t%s\t%s\n' % (clus_id, patient_disease,
+            #     name, birthday, ','.join(symptoms), ','.join(herbs)))
         out.write('\n')
     out.close()
 
