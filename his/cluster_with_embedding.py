@@ -5,7 +5,7 @@
 
 from collections import OrderedDict
 import numpy as np
-from scipy.stats import entropy
+from scipy.stats import entropy, ttest_ind
 from sklearn.cluster import AgglomerativeClustering, KMeans, SpectralClustering
 from sklearn.metrics.cluster import adjusted_rand_score, completeness_score
 import random
@@ -268,6 +268,38 @@ def upper_bound_matrix(embedded_matrix):
         embedded_matrix[i] = [ele if ele <= 1 else 1 for ele in row]
     return embedded_matrix
 
+def average_f_measure(true_labels, y_pred):
+    '''
+    Outputs the list of F1 scores for each cluster.
+    '''
+    f1_list = []
+    for cluster_label in set(true_labels):
+        current_true_cluster = [i for i, e in enumerate(true_labels
+            ) if e == cluster_label]
+        best_cluster_f = 0
+        # Get the best predicted cluster for each true cluster.
+        for pred_cluster_label in set(y_pred):
+            current_pred_cluster = [i for i, e in enumerate(y_pred
+                ) if e == pred_cluster_label]
+            true_positive = float(len(set(current_true_cluster).intersection(
+                current_pred_cluster)))
+            precision = true_positive / len(current_pred_cluster)
+            recall = true_positive / len(current_true_cluster)
+            if precision == 0 and recall == 0:
+                continue
+            else:
+                f_1 = 2 * precision * recall / (precision + recall)
+            best_cluster_f = max(f_1, best_cluster_f)
+        f1_list += [f_1]
+
+    y = [0.03200000000000001, 0.0440251572327044, 0.011627906976744186, 0.11764705882352941, 0.010416666666666666, 0.2, 0.033057851239669415, 0.02390438247011952, 0.0075187969924812035, 0.04878048780487805, 0.018518518518518517, 0.013157894736842106, 0.04166666666666667, 0.007246376811594203, 0.010526315789473684, 0.007380073800738007, 0.013513513513513514, 0.11764705882352941, 0.125, 0.04347826086956521, 0.11764705882352941, 0.09090909090909093, 0.0392156862745098, 0.07142857142857142, 0.013245033112582783, 0.028368794326241138, 0.23529411764705882, 0.017241379310344827, 0.013157894736842105, 0.007407407407407408, 0.046511627906976744, 0.07407407407407407, 0.0641025641025641, 0.25, 0.015384615384615385, 0.28571428571428575, 0.014705882352941178, 0.026143790849673203, 0.08333333333333334, 0.015267175572519083, 0.1818181818181818, 0.013157894736842105, 0.17857142857142858, 0.013245033112582783, 0.017094017094017096, 0.038834951456310676, 0.11764705882352942, 0.07407407407407407, 0.1818181818181818, 0.11111111111111112, 0.01904761904761905]
+
+    print np.mean(f1_list), 'with embedding'
+
+    print np.mean(y), 'without embedding'
+
+    print ttest_ind(f1_list, y)[1] / 2.0
+
 def main():
     # Sorting out arguments.
     if len(sys.argv) != 4:
@@ -324,7 +356,8 @@ def main():
     entropy_list = np.apply_along_axis(entropy, axis=1, arr=embedded_matrix)
 
     # Delete the percentage% lowest entropy elements.
-    for percentage in [p / 20.0 for p in range(20)]:
+    # for percentage in [p / 20.0 for p in range(20)]:
+    for percentage in [0.0]:
         num_att_to_delete = int(len(feature_list) * percentage)
 
         # Deleting lowest entropy attributes.
@@ -372,6 +405,7 @@ def main():
         rand_index = adjusted_rand_score(true_labels, y_pred)
         # if rand_index >= 0.292420:
         print rand_index, percentage
+        average_f_measure(true_labels, y_pred)
         # compl_score = completeness_score(true_labels, y_pred)
         # print compl_score
         # out.write(str(rand_index) + '\n')

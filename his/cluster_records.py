@@ -76,6 +76,48 @@ def get_label_to_index_conversions(labels):
     '''
     return [labels.index(label) for label in labels]
 
+def average_f_measure(true_labels, y_pred):
+    '''
+    Outputs the list of F1 scores for each cluster.
+    '''
+    f1_list = []
+    for cluster_label in set(true_labels):
+        current_true_cluster = [i for i, e in enumerate(true_labels
+            ) if e == cluster_label]
+        best_cluster_f = 0
+        # Get the best predicted cluster for each true cluster.
+        for pred_cluster_label in set(y_pred):
+            current_pred_cluster = [i for i, e in enumerate(y_pred
+                ) if e == pred_cluster_label]
+            true_positive = float(len(set(current_true_cluster).intersection(
+                current_pred_cluster)))
+            precision = true_positive / len(current_pred_cluster)
+            recall = true_positive / len(current_true_cluster)
+            if precision == 0 and recall == 0:
+                continue
+            else:
+                f_1 = 2 * precision * recall / (precision + recall)
+            best_cluster_f = max(f_1, best_cluster_f)
+        f1_list += [f_1]
+    for pred_cluster_label in set(y_pred):
+        current_pred_cluster = [i for i, e in enumerate(y_pred
+            ) if e == pred_cluster_label]
+        best_cluster_f = 0
+        for cluster_label in set(true_labels):
+            current_true_cluster = [i for i, e in enumerate(true_labels
+                ) if e == cluster_label]
+            true_positive = float(len(set(current_true_cluster).intersection(
+                current_pred_cluster)))
+            precision = true_positive / len(current_pred_cluster)
+            recall = true_positive / len(current_true_cluster)
+            if precision == 0 and recall == 0:
+                continue
+            else:
+                f_1 = 2 * precision * recall / (precision + recall)
+            best_cluster_f = max(f_1, best_cluster_f)
+        f1_list += [f_1]
+    print f1_list
+
 def cluster_patient_records(label_type, vector_type, sb, sa, hb, ha):
     '''
     Clusters on the patient records. sa sb are symptom alpha and symptom beta,
@@ -140,6 +182,7 @@ def cluster_patient_records(label_type, vector_type, sb, sa, hb, ha):
     y_pred = AgglomerativeClustering(n_clusters=num_clusters, affinity='cosine',
         linkage='average').fit_predict(feature_vectors)
     print adjusted_rand_score(true_labels, y_pred), sb, sa, hb, ha
+    average_f_measure(true_labels, y_pred)
 
 def main():
 
